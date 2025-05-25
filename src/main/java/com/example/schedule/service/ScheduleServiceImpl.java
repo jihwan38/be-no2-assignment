@@ -21,21 +21,21 @@ public class ScheduleServiceImpl implements ScheduleService {
         this.scheduleRepository = scheduleRepository;
     }
 
+    //Lv1 일정 생성
     @Override
     public ScheduleResponseDto createSchedule(ScheduleRequestDto scheduleRequestDto) {
+        LocalDateTime now = LocalDateTime.now();
         Schedule schedule = new Schedule(
                 scheduleRequestDto.getTodo(),
                 scheduleRequestDto.getAuthor(),
-                scheduleRequestDto.getPassword()
+                scheduleRequestDto.getPassword(),
+                now,
+                now
         );
-
         return scheduleRepository.createSchedule(schedule);
-
-
     }
 
-
-
+    //Lv1 전체 일정 조회
     @Override
     public List<ScheduleResponseDto> getSchedules(String author, String modifiedAt) {
         if(author != null && modifiedAt != null) {
@@ -49,22 +49,22 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
     }
 
+    //Lv1 선택 일정 조회
     @Override
     public ScheduleResponseDto getScheduleById(Long id) {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
         return new ScheduleResponseDto(schedule);
     }
 
+    //Lv2 선택 일정 수정
     @Transactional
     @Override
     public ScheduleResponseDto updateSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
 
-
         if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
         }
-
 
         if(scheduleRequestDto.getAuthor() != null)schedule.setAuthor(scheduleRequestDto.getAuthor());
         if(scheduleRequestDto.getTodo() != null)schedule.setTodo(scheduleRequestDto.getTodo());
@@ -76,12 +76,11 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule not found");
         }
 
-
-
         return new ScheduleResponseDto(schedule);
 
     }
 
+    //Lv2 선택 일정 삭제
     @Override
     public void deleteSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);

@@ -31,14 +31,13 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
         jdbcInsert.withTableName("schedule").usingGeneratedKeyColumns("id");
 
-        LocalDateTime now = LocalDateTime.now();
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("todo", schedule.getTodo());
         parameters.put("author", schedule.getAuthor());
         parameters.put("password", schedule.getPassword());
-        parameters.put("createdAt", now);
-        parameters.put("modifiedAt", now);
+        parameters.put("createdAt", schedule.getCreatedAt());
+        parameters.put("modifiedAt", schedule.getModifiedAt());
 
         Number key = jdbcInsert.executeAndReturnKey(new MapSqlParameterSource(parameters));
 
@@ -46,40 +45,40 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
                 key.longValue(),
                 schedule.getTodo(),
                 schedule.getAuthor(),
-                now,
-                now
+                schedule.getCreatedAt(),
+                schedule.getModifiedAt()
         );
 
     }
 
-    //조건 두 가지 충족을 안 하는 경우 Lv1
+
     @Override
     public List<ScheduleResponseDto> getAllSchedules() {
 
         return jdbcTemplate.query("select * from schedule ORDER BY modifiedAt DESC", scheduleRowMapper());
     }
-    //조건 author만 충족 Lv1
+
     @Override
     public List<ScheduleResponseDto> getSchedulesByAuthor(String author) {
         String sql = "select * from schedule where author = ? ORDER BY modifiedAt DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper(), author);
     }
 
-    //조건 modifiedAt만 충족 Lv1
+
     @Override
     public List<ScheduleResponseDto> getSchedulesByModifiedAt(String modifiedAt) {
         String sql = "select * from schedule where DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper(), modifiedAt);
     }
 
-    //조건 둘 다 충족 Lv1
+
     @Override
     public List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(String author, String modifiedAt) {
         String sql = "select * from schedule where author = ? and DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper(), author, modifiedAt);
     }
 
-    //고유 id를 통해 조회 Lv1 + Lv5(예외처리 적용)
+
     @Override
     public Schedule getScheduleByIdOrElseThrow(Long id) {
         String sql = "select * from schedule where id = ?";

@@ -18,14 +18,12 @@ public class ScheduleController {
     public ScheduleController(ScheduleService scheduleService) {
         this.scheduleService = scheduleService;
     }
-
+    //Lv1 일정 생성
     @PostMapping
     public ResponseEntity<ScheduleResponseDto> createSchedule(@RequestBody ScheduleRequestDto scheduleRequestDto) {
         return new ResponseEntity<>(scheduleService.createSchedule(scheduleRequestDto), HttpStatus.CREATED);
     }
-
-
-
+    //Lv1 전체 일정 조회
     @GetMapping
     public ResponseEntity<List<ScheduleResponseDto>> getSchedules(
             @RequestParam(required = false) String author,
@@ -33,12 +31,12 @@ public class ScheduleController {
     ){
         return new ResponseEntity<>(scheduleService.getSchedules(author, modifiedAt), HttpStatus.OK);
     }
-
+    //Lv1 선택 일정 조회
     @GetMapping("/{id}")
     public ResponseEntity<ScheduleResponseDto> getScheduleById(@PathVariable Long id){
         return new ResponseEntity<>(scheduleService.getScheduleById(id), HttpStatus.OK);
     }
-
+    //Lv2 선택 일정 수정
     @PutMapping("/{id}")
     public ResponseEntity<ScheduleResponseDto> updateSchedule(
             @PathVariable Long id,
@@ -46,7 +44,7 @@ public class ScheduleController {
     ){
         return new ResponseEntity<>(scheduleService.updateSchedule(id, scheduleRequestDto), HttpStatus.OK);
     }
-
+    //Lv2 선택 일정 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSchedule(
             @PathVariable Long id,
