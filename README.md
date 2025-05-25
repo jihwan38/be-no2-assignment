@@ -1,7 +1,7 @@
 # 일정관리 앱 서버
 
 ## API 명세서
-ScheduleController
+
 ### Schedule API
 
 | 기능             | Method | URL                   | Request 예시                                                                 | Response 예시                                                                                      | 상태코드           |
