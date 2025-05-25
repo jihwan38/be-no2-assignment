@@ -12,4 +12,6 @@ public interface ScheduleRepository {
     List<ScheduleResponseDto> getSchedulesByModifiedAt(String ModifiedAt);
     List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(String author, String modifiedAt);
     Schedule getScheduleByIdOrElseThrow(Long id);
+    int updateSchedule(Schedule schedule);
+    int deleteSchedule(Long id);
 }

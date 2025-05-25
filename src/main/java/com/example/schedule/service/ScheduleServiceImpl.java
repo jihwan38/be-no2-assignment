@@ -4,8 +4,12 @@ import com.example.schedule.dto.ScheduleRequestDto;
 import com.example.schedule.dto.ScheduleResponseDto;
 import com.example.schedule.entity.Schedule;
 import com.example.schedule.repository.ScheduleRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -50,4 +54,45 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
         return new ScheduleResponseDto(schedule);
     }
+
+    @Transactional
+    @Override
+    public ScheduleResponseDto updateSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
+        Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
+
+
+        if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
+        }
+
+
+        if(scheduleRequestDto.getAuthor() != null)schedule.setAuthor(scheduleRequestDto.getAuthor());
+        if(scheduleRequestDto.getTodo() != null)schedule.setTodo(scheduleRequestDto.getTodo());
+        schedule.setModifiedAt(LocalDateTime.now());
+
+        int updatedRow = scheduleRepository.updateSchedule(schedule);
+
+        if(updatedRow == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule not found");
+        }
+
+
+
+        return new ScheduleResponseDto(schedule);
+
+    }
+
+    @Override
+    public void deleteSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
+        Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
+        if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
+        }
+        int deleteRow = scheduleRepository.deleteSchedule(id);
+        if(deleteRow == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule not found");
+        }
+    }
+
+
 }

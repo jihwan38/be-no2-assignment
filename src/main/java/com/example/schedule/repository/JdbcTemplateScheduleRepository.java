@@ -52,38 +52,52 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
 
     }
 
-    //조건 두 가지 충족을 안 하는 경우
+    //조건 두 가지 충족을 안 하는 경우 Lv1
     @Override
     public List<ScheduleResponseDto> getAllSchedules() {
 
         return jdbcTemplate.query("select * from schedule ORDER BY modifiedAt DESC", scheduleRowMapper());
     }
-    //조건 author만 충족
+    //조건 author만 충족 Lv1
     @Override
     public List<ScheduleResponseDto> getSchedulesByAuthor(String author) {
         String sql = "select * from schedule where author = ? ORDER BY modifiedAt DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper(), author);
     }
 
-    //조건 modifiedAt만 충족
+    //조건 modifiedAt만 충족 Lv1
     @Override
     public List<ScheduleResponseDto> getSchedulesByModifiedAt(String modifiedAt) {
         String sql = "select * from schedule where DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper(), modifiedAt);
     }
 
-    //조건 둘 다 충족
+    //조건 둘 다 충족 Lv1
     @Override
     public List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(String author, String modifiedAt) {
         String sql = "select * from schedule where author = ? and DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper(), author, modifiedAt);
     }
 
+    //고유 id를 통해 조회 Lv1 + Lv5(예외처리 적용)
     @Override
     public Schedule getScheduleByIdOrElseThrow(Long id) {
         String sql = "select * from schedule where id = ?";
         List<Schedule> result = jdbcTemplate.query(sql, scheduleRowMapperV2(), id);
         return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exist id = " + id));
+    }
+
+    @Override
+    public int updateSchedule(Schedule schedule) {
+        String sql = "update schedule set todo = ?, author = ?, modifiedAt = ? where id = ?";
+        return jdbcTemplate.update(sql, schedule.getTodo(), schedule.getAuthor(), schedule.getModifiedAt(), schedule.getId());
+
+    }
+
+    @Override
+    public int deleteSchedule(Long id) {
+        String sql = "delete from schedule where id = ?";
+        return jdbcTemplate.update(sql, id);
     }
 
 
@@ -110,6 +124,23 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
                         rs.getLong("id"),
                         rs.getString("todo"),
                         rs.getString("author"),
+                        rs.getString("password"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getTimestamp("modifiedAt").toLocalDateTime()
+                );
+            }
+        };
+    }
+
+    private RowMapper<Schedule> scheduleRowMapperV3(){
+        return new RowMapper<Schedule>() {
+            @Override
+            public Schedule mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return new Schedule(
+                        rs.getLong("id"),
+                        rs.getString("todo"),
+                        rs.getString("author"),
+                        rs.getString("password"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getTimestamp("modifiedAt").toLocalDateTime()
                 );
