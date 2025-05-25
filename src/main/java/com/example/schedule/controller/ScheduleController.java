@@ -26,10 +26,10 @@ public class ScheduleController {
     //Lv1 전체 일정 조회
     @GetMapping
     public ResponseEntity<List<ScheduleResponseDto>> getSchedules(
-            @RequestParam(required = false) String author,
+            @RequestParam(required = false) Long authorId,
             @RequestParam(required = false) String modifiedAt
     ){
-        return new ResponseEntity<>(scheduleService.getSchedules(author, modifiedAt), HttpStatus.OK);
+        return new ResponseEntity<>(scheduleService.getSchedules(authorId, modifiedAt), HttpStatus.OK);
     }
     //Lv1 선택 일정 조회
     @GetMapping("/{id}")

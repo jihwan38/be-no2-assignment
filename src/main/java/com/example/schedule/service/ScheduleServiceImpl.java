@@ -16,18 +16,26 @@ import java.util.List;
 public class ScheduleServiceImpl implements ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
+    private final AuthorService authorService;
 
-    public ScheduleServiceImpl(ScheduleRepository scheduleRepository) {
+    public ScheduleServiceImpl(ScheduleRepository scheduleRepository, AuthorService authorService) {
         this.scheduleRepository = scheduleRepository;
+        this.authorService = authorService;
     }
 
     //Lv1 일정 생성
     @Override
     public ScheduleResponseDto createSchedule(ScheduleRequestDto scheduleRequestDto) {
+        //Lv3 작성자가 없으면 생성하지 못함
+        boolean isExist = authorService.existsById(scheduleRequestDto.getAuthorId());
+        if (!isExist) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+        }
+
         LocalDateTime now = LocalDateTime.now();
         Schedule schedule = new Schedule(
                 scheduleRequestDto.getTodo(),
-                scheduleRequestDto.getAuthor(),
+                scheduleRequestDto.getAuthorId(),
                 scheduleRequestDto.getPassword(),
                 now,
                 now
@@ -37,11 +45,11 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     //Lv1 전체 일정 조회
     @Override
-    public List<ScheduleResponseDto> getSchedules(String author, String modifiedAt) {
-        if(author != null && modifiedAt != null) {
-            return scheduleRepository.getSchedulesByAuthorAndModifiedAt(author, modifiedAt);
-        }else if(author != null){
-            return scheduleRepository.getSchedulesByAuthor(author);
+    public List<ScheduleResponseDto> getSchedules(Long authorId, String modifiedAt) {
+        if(authorId != null && modifiedAt != null) {
+            return scheduleRepository.getSchedulesByAuthorAndModifiedAt(authorId, modifiedAt);
+        }else if(authorId != null){
+            return scheduleRepository.getSchedulesByAuthor(authorId);
         }else if(modifiedAt != null){
             return scheduleRepository.getSchedulesByModifiedAt(modifiedAt);
         }else{
@@ -66,7 +74,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
         }
 
-        if(scheduleRequestDto.getAuthor() != null)schedule.setAuthor(scheduleRequestDto.getAuthor());
+        if(scheduleRequestDto.getAuthorId() != null)schedule.setAuthorId(scheduleRequestDto.getAuthorId());
         if(scheduleRequestDto.getTodo() != null)schedule.setTodo(scheduleRequestDto.getTodo());
         schedule.setModifiedAt(LocalDateTime.now());
 

@@ -34,7 +34,7 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("todo", schedule.getTodo());
-        parameters.put("author", schedule.getAuthor());
+        parameters.put("authorId", schedule.getAuthorId());
         parameters.put("password", schedule.getPassword());
         parameters.put("createdAt", schedule.getCreatedAt());
         parameters.put("modifiedAt", schedule.getModifiedAt());
@@ -44,7 +44,7 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
         return new ScheduleResponseDto(
                 key.longValue(),
                 schedule.getTodo(),
-                schedule.getAuthor(),
+                schedule.getAuthorId(),
                 schedule.getCreatedAt(),
                 schedule.getModifiedAt()
         );
@@ -59,9 +59,9 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
     }
 
     @Override
-    public List<ScheduleResponseDto> getSchedulesByAuthor(String author) {
-        String sql = "select * from schedule where author = ? ORDER BY modifiedAt DESC";
-        return jdbcTemplate.query(sql, scheduleRowMapper(), author);
+    public List<ScheduleResponseDto> getSchedulesByAuthor(Long authorId) {
+        String sql = "select * from schedule where authorId = ? ORDER BY modifiedAt DESC";
+        return jdbcTemplate.query(sql, scheduleRowMapper(), authorId);
     }
 
 
@@ -73,9 +73,9 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
 
 
     @Override
-    public List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(String author, String modifiedAt) {
-        String sql = "select * from schedule where author = ? and DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
-        return jdbcTemplate.query(sql, scheduleRowMapper(), author, modifiedAt);
+    public List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(Long authorId, String modifiedAt) {
+        String sql = "select * from schedule where authorId = ? and DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
+        return jdbcTemplate.query(sql, scheduleRowMapper(), authorId, modifiedAt);
     }
 
 
@@ -88,8 +88,8 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
 
     @Override
     public int updateSchedule(Schedule schedule) {
-        String sql = "update schedule set todo = ?, author = ?, modifiedAt = ? where id = ?";
-        return jdbcTemplate.update(sql, schedule.getTodo(), schedule.getAuthor(), schedule.getModifiedAt(), schedule.getId());
+        String sql = "update schedule set todo = ?, authorId = ?, modifiedAt = ? where id = ?";
+        return jdbcTemplate.update(sql, schedule.getTodo(), schedule.getAuthorId(), schedule.getModifiedAt(), schedule.getId());
 
     }
 
@@ -107,7 +107,7 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
                 return new ScheduleResponseDto(
                         rs.getLong("id"),
                         rs.getString("todo"),
-                        rs.getString("author"),
+                        rs.getLong("authorId"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getTimestamp("modifiedAt").toLocalDateTime()
                 );
@@ -122,7 +122,7 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
                 return new Schedule(
                         rs.getLong("id"),
                         rs.getString("todo"),
-                        rs.getString("author"),
+                        rs.getLong("authorId"),
                         rs.getString("password"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getTimestamp("modifiedAt").toLocalDateTime()
@@ -138,7 +138,7 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
                 return new Schedule(
                         rs.getLong("id"),
                         rs.getString("todo"),
-                        rs.getString("author"),
+                        rs.getLong("authorId"),
                         rs.getString("password"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getTimestamp("modifiedAt").toLocalDateTime()

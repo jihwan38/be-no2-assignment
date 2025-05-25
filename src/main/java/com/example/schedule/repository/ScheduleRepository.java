@@ -8,9 +8,9 @@ import java.util.List;
 public interface ScheduleRepository {
     ScheduleResponseDto createSchedule(Schedule schedule);
     List<ScheduleResponseDto> getAllSchedules();
-    List<ScheduleResponseDto> getSchedulesByAuthor(String author);
+    List<ScheduleResponseDto> getSchedulesByAuthor(Long authorId);
     List<ScheduleResponseDto> getSchedulesByModifiedAt(String ModifiedAt);
-    List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(String author, String modifiedAt);
+    List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(Long authorId, String modifiedAt);
     Schedule getScheduleByIdOrElseThrow(Long id);
     int updateSchedule(Schedule schedule);
     int deleteSchedule(Long id);
