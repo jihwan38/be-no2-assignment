@@ -3,6 +3,9 @@ package com.example.schedule.service;
 import com.example.schedule.dto.ScheduleRequestDto;
 import com.example.schedule.dto.ScheduleResponseDto;
 import com.example.schedule.entity.Schedule;
+import com.example.schedule.exception.AuthorNotFoundException;
+import com.example.schedule.exception.InvalidPasswordException;
+import com.example.schedule.exception.ScheduleNotFoundException;
 import com.example.schedule.repository.ScheduleRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,7 +32,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         //Lv3 작성자가 없으면 생성하지 못함
         boolean isExist = authorService.existsById(scheduleRequestDto.getAuthorId());
         if (!isExist) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+            throw new AuthorNotFoundException(scheduleRequestDto.getAuthorId());
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -71,7 +74,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
 
         if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
+            throw new InvalidPasswordException();
         }
 
         if(scheduleRequestDto.getAuthorId() != null)schedule.setAuthorId(scheduleRequestDto.getAuthorId());
@@ -81,7 +84,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         int updatedRow = scheduleRepository.updateSchedule(schedule);
 
         if(updatedRow == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule not found");
+            throw new ScheduleNotFoundException(schedule.getId());
         }
 
         return new ScheduleResponseDto(schedule);
@@ -93,11 +96,11 @@ public class ScheduleServiceImpl implements ScheduleService {
     public void deleteSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
         if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
+            throw new InvalidPasswordException();
         }
         int deleteRow = scheduleRepository.deleteSchedule(id);
         if(deleteRow == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule not found");
+            throw new ScheduleNotFoundException(schedule.getId());
         }
     }
 

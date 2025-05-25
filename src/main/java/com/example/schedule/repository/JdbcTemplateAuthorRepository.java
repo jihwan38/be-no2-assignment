@@ -4,6 +4,7 @@ import com.example.schedule.dto.AuthorRequestDto;
 import com.example.schedule.dto.AuthorResponseDto;
 import com.example.schedule.dto.ScheduleResponseDto;
 import com.example.schedule.entity.Author;
+import com.example.schedule.exception.AuthorNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -61,7 +62,7 @@ public class JdbcTemplateAuthorRepository implements AuthorRepository {
     public Author getAuthorByIdOrElseThrow(Long id) {
         String sql = "select * from author where id = ?";
         List<Author> result = jdbcTemplate.query(sql, authorRowMapperV2(), id);
-        return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exist id = " + id));
+        return result.stream().findAny().orElseThrow(() -> new AuthorNotFoundException(id));
     }
 
     @Override

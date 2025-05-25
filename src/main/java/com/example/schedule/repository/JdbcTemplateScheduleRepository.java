@@ -2,6 +2,7 @@ package com.example.schedule.repository;
 
 import com.example.schedule.dto.ScheduleResponseDto;
 import com.example.schedule.entity.Schedule;
+import com.example.schedule.exception.ScheduleNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -83,7 +84,7 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
     public Schedule getScheduleByIdOrElseThrow(Long id) {
         String sql = "select * from schedule where id = ?";
         List<Schedule> result = jdbcTemplate.query(sql, scheduleRowMapperV2(), id);
-        return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exist id = " + id));
+        return result.stream().findAny().orElseThrow(() -> new ScheduleNotFoundException(id));
     }
 
     @Override
