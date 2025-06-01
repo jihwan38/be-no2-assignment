@@ -1,5 +1,6 @@
 package com.example.schedule.repository;
 
+import com.example.schedule.dto.ScheduleAndAuthorResponseDto;
 import com.example.schedule.dto.ScheduleResponseDto;
 import com.example.schedule.entity.Schedule;
 import com.example.schedule.exception.ScheduleNotFoundException;
@@ -28,10 +29,10 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
     }
 
     @Override
-    public ScheduleResponseDto createSchedule(Schedule schedule) {
-        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
-        jdbcInsert.withTableName("schedule").usingGeneratedKeyColumns("id");
-
+    public ScheduleAndAuthorResponseDto createSchedule(Schedule schedule) {
+        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("schedule")
+                .usingGeneratedKeyColumns("id");
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("todo", schedule.getTodo());
@@ -42,42 +43,84 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
 
         Number key = jdbcInsert.executeAndReturnKey(new MapSqlParameterSource(parameters));
 
-        return new ScheduleResponseDto(
-                key.longValue(),
-                schedule.getTodo(),
-                schedule.getAuthorId(),
-                schedule.getCreatedAt(),
-                schedule.getModifiedAt()
-        );
+        // 생성된 스케줄 ID로 다시 조회 (작성자 이름 포함된 DTO로)
+        return getScheduleAndAuthorById(key.longValue());
+    }
 
+
+
+    @Override
+    public List<ScheduleAndAuthorResponseDto> getAllSchedules() {
+        String sql = """
+        SELECT s.id, s.todo, s.authorId, a.name AS authorName,
+               s.createdAt, s.modifiedAt
+        FROM schedule s
+        JOIN author a ON s.authorId = a.id
+        ORDER BY s.modifiedAt DESC
+    """;
+        return jdbcTemplate.query(sql, scheduleWithAuthorRowMapper());
     }
 
 
     @Override
-    public List<ScheduleResponseDto> getAllSchedules() {
+    public List<ScheduleAndAuthorResponseDto> getSchedulesByAuthor(Long authorId) {
+        String sql = """
+        SELECT s.id, s.todo, s.authorId, a.name AS authorName,
+               s.createdAt, s.modifiedAt
+        FROM schedule s
+        JOIN author a ON s.authorId = a.id
+        WHERE s.authorId = ?
+        ORDER BY s.modifiedAt DESC
+    """;
 
-        return jdbcTemplate.query("select * from schedule ORDER BY modifiedAt DESC", scheduleRowMapper());
+        return jdbcTemplate.query(sql, scheduleWithAuthorRowMapper(), authorId);
     }
 
-    @Override
-    public List<ScheduleResponseDto> getSchedulesByAuthor(Long authorId) {
-        String sql = "select * from schedule where authorId = ? ORDER BY modifiedAt DESC";
-        return jdbcTemplate.query(sql, scheduleRowMapper(), authorId);
-    }
-
-
-    @Override
-    public List<ScheduleResponseDto> getSchedulesByModifiedAt(String modifiedAt) {
-        String sql = "select * from schedule where DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
-        return jdbcTemplate.query(sql, scheduleRowMapper(), modifiedAt);
-    }
 
 
     @Override
-    public List<ScheduleResponseDto> getSchedulesByAuthorAndModifiedAt(Long authorId, String modifiedAt) {
-        String sql = "select * from schedule where authorId = ? and DATE(modifiedAt) = ? ORDER BY modifiedAt DESC";
-        return jdbcTemplate.query(sql, scheduleRowMapper(), authorId, modifiedAt);
+    public List<ScheduleAndAuthorResponseDto> getSchedulesByModifiedAt(String modifiedAt) {
+        String sql = """
+        SELECT s.id, s.todo, s.authorId, a.name AS authorName,
+               s.createdAt, s.modifiedAt
+        FROM schedule s
+        JOIN author a ON s.authorId = a.id
+        WHERE DATE(s.modifiedAt) = ?
+        ORDER BY s.modifiedAt DESC
+    """;
+        return jdbcTemplate.query(sql, scheduleWithAuthorRowMapper(), modifiedAt);
     }
+
+
+    @Override
+    public List<ScheduleAndAuthorResponseDto> getSchedulesByAuthorAndModifiedAt(Long authorId, String modifiedAt) {
+        String sql = """
+        SELECT s.id, s.todo, s.authorId, a.name AS authorName,
+               s.createdAt, s.modifiedAt
+        FROM schedule s
+        JOIN author a ON s.authorId = a.id
+        WHERE s.authorId = ? AND DATE(s.modifiedAt) = ?
+        ORDER BY s.modifiedAt DESC
+    """;
+        return jdbcTemplate.query(sql, scheduleWithAuthorRowMapper(), authorId, modifiedAt);
+    }
+
+    @Override
+    public ScheduleAndAuthorResponseDto getScheduleAndAuthorById(Long id) {
+        String sql = """
+        SELECT s.id, s.todo, s.authorId, a.name AS authorName,
+               s.createdAt, s.modifiedAt
+        FROM schedule s
+        JOIN author a ON s.authorId = a.id
+        WHERE s.id = ?
+    """;
+
+        return jdbcTemplate.query(sql, scheduleWithAuthorRowMapper(), id)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new ScheduleNotFoundException(id));
+    }
+
 
 
     @Override
@@ -100,21 +143,21 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
         return jdbcTemplate.update(sql, id);
     }
 
-
-    private RowMapper<ScheduleResponseDto> scheduleRowMapper(){
-        return new RowMapper<ScheduleResponseDto>() {
-            @Override
-            public ScheduleResponseDto mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return new ScheduleResponseDto(
-                        rs.getLong("id"),
-                        rs.getString("todo"),
-                        rs.getLong("authorId"),
-                        rs.getTimestamp("createdAt").toLocalDateTime(),
-                        rs.getTimestamp("modifiedAt").toLocalDateTime()
-                );
-            }
-        };
+    @Override
+    public List<ScheduleAndAuthorResponseDto> getSchedulesAndAuthorByPage(int page, int size) {
+        String sql = """
+        SELECT s.id, s.todo, s.authorId, a.name AS authorName,
+               s.createdAt, s.modifiedAt
+        FROM schedule s
+        JOIN author a ON s.authorId = a.id
+        ORDER BY s.modifiedAt DESC
+        LIMIT ? OFFSET ?
+    """;
+        int offset = page * size;
+        return jdbcTemplate.query(sql, scheduleWithAuthorRowMapper(), size, offset);
     }
+
+
 
     private RowMapper<Schedule> scheduleRowMapperV2(){
         return new RowMapper<Schedule>() {
@@ -132,21 +175,20 @@ public class JdbcTemplateScheduleRepository implements ScheduleRepository {
         };
     }
 
-    private RowMapper<Schedule> scheduleRowMapperV3(){
-        return new RowMapper<Schedule>() {
-            @Override
-            public Schedule mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return new Schedule(
-                        rs.getLong("id"),
-                        rs.getString("todo"),
-                        rs.getLong("authorId"),
-                        rs.getString("password"),
-                        rs.getTimestamp("createdAt").toLocalDateTime(),
-                        rs.getTimestamp("modifiedAt").toLocalDateTime()
-                );
-            }
-        };
+
+
+    private RowMapper<ScheduleAndAuthorResponseDto> scheduleWithAuthorRowMapper() {
+        return (rs, rowNum) -> new ScheduleAndAuthorResponseDto(
+                rs.getLong("id"),
+                rs.getString("todo"),
+                rs.getLong("authorId"),
+                rs.getString("authorName"),
+                rs.getTimestamp("createdAt").toLocalDateTime(),
+                rs.getTimestamp("modifiedAt").toLocalDateTime()
+        );
     }
+
+
 
 
 }

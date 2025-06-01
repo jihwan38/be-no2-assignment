@@ -1,14 +1,14 @@
 package com.example.schedule.service;
 
-import com.example.schedule.dto.ScheduleRequestDto;
-import com.example.schedule.dto.ScheduleResponseDto;
+import com.example.schedule.dto.*;
 
 import java.util.List;
 
 public interface ScheduleService {
-    ScheduleResponseDto createSchedule(ScheduleRequestDto scheduleRequestDto);
-    List<ScheduleResponseDto> getSchedules(Long authorId, String modifiedAt);
-    ScheduleResponseDto getScheduleById(Long id);
-    ScheduleResponseDto updateSchedule(Long id, ScheduleRequestDto scheduleRequestDto);
-    void deleteSchedule(Long id, ScheduleRequestDto scheduleRequestDto);
+    ScheduleAndAuthorResponseDto createSchedule(ScheduleCreateRequestDto scheduleRequestDto);
+    List<ScheduleAndAuthorResponseDto> getSchedules(Long authorId, String modifiedAt);
+    ScheduleAndAuthorResponseDto getScheduleById(Long id);
+    ScheduleAndAuthorResponseDto updateSchedule(Long id, ScheduleUpdateRequestDto scheduleRequestDto);
+    void deleteSchedule(Long id, ScheduleDeleteRequestDto scheduleRequestDto);
+    List<ScheduleAndAuthorResponseDto> getSchedulesByPage(int page, int size);
 }

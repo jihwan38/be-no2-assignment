@@ -1,7 +1,6 @@
 package com.example.schedule.service;
 
-import com.example.schedule.dto.ScheduleRequestDto;
-import com.example.schedule.dto.ScheduleResponseDto;
+import com.example.schedule.dto.*;
 import com.example.schedule.entity.Schedule;
 import com.example.schedule.exception.AuthorNotFoundException;
 import com.example.schedule.exception.InvalidPasswordException;
@@ -28,7 +27,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     //Lv1 일정 생성
     @Override
-    public ScheduleResponseDto createSchedule(ScheduleRequestDto scheduleRequestDto) {
+    public ScheduleAndAuthorResponseDto createSchedule(ScheduleCreateRequestDto scheduleRequestDto) {
         //Lv3 작성자가 없으면 생성하지 못함
         boolean isExist = authorService.existsById(scheduleRequestDto.getAuthorId());
         if (!isExist) {
@@ -48,7 +47,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     //Lv1 전체 일정 조회
     @Override
-    public List<ScheduleResponseDto> getSchedules(Long authorId, String modifiedAt) {
+    public List<ScheduleAndAuthorResponseDto> getSchedules(Long authorId, String modifiedAt) {
         if(authorId != null && modifiedAt != null) {
             return scheduleRepository.getSchedulesByAuthorAndModifiedAt(authorId, modifiedAt);
         }else if(authorId != null){
@@ -62,38 +61,42 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     //Lv1 선택 일정 조회
     @Override
-    public ScheduleResponseDto getScheduleById(Long id) {
-        Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
-        return new ScheduleResponseDto(schedule);
+    public ScheduleAndAuthorResponseDto getScheduleById(Long id) {
+        return scheduleRepository.getScheduleAndAuthorById(id);
     }
+
+
+
+
+
 
     //Lv2 선택 일정 수정
     @Transactional
     @Override
-    public ScheduleResponseDto updateSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
+    public ScheduleAndAuthorResponseDto updateSchedule(Long id, ScheduleUpdateRequestDto scheduleRequestDto) {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
 
-        if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
+        if (!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
             throw new InvalidPasswordException();
         }
 
-        if(scheduleRequestDto.getAuthorId() != null)schedule.setAuthorId(scheduleRequestDto.getAuthorId());
-        if(scheduleRequestDto.getTodo() != null)schedule.setTodo(scheduleRequestDto.getTodo());
+
+        if (scheduleRequestDto.getTodo() != null) schedule.setTodo(scheduleRequestDto.getTodo());
         schedule.setModifiedAt(LocalDateTime.now());
 
         int updatedRow = scheduleRepository.updateSchedule(schedule);
-
-        if(updatedRow == 0) {
+        if (updatedRow == 0) {
             throw new ScheduleNotFoundException(schedule.getId());
         }
 
-        return new ScheduleResponseDto(schedule);
 
+        return scheduleRepository.getScheduleAndAuthorById(schedule.getId());
     }
+
 
     //Lv2 선택 일정 삭제
     @Override
-    public void deleteSchedule(Long id, ScheduleRequestDto scheduleRequestDto) {
+    public void deleteSchedule(Long id, ScheduleDeleteRequestDto scheduleRequestDto) {
         Schedule schedule = scheduleRepository.getScheduleByIdOrElseThrow(id);
         if(!schedule.getPassword().equals(scheduleRequestDto.getPassword())) {
             throw new InvalidPasswordException();
@@ -104,5 +107,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
     }
 
-
+    @Override
+    public List<ScheduleAndAuthorResponseDto> getSchedulesByPage(int page, int size) {
+        return scheduleRepository.getSchedulesAndAuthorByPage(page, size);
+    }
 }

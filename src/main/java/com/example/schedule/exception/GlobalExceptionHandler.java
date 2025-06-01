@@ -5,6 +5,7 @@ import com.example.schedule.exception.AuthorNotFoundException;
 import com.example.schedule.exception.InvalidPasswordException;
 import com.example.schedule.exception.ScheduleNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -46,12 +47,23 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateKey(DuplicateKeyException e) {
+        return buildResponse(HttpStatus.CONFLICT, "이미 등록된 이메일입니다.");
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception e) {
         e.printStackTrace();
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
     }
+
+    @ExceptionHandler(InvalidPageRequestException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidPageRequest(InvalidPageRequestException e) {
+        return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
 
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {

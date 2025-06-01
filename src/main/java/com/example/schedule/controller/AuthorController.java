@@ -3,6 +3,7 @@ package com.example.schedule.controller;
 import com.example.schedule.dto.AuthorRequestDto;
 import com.example.schedule.dto.AuthorResponseDto;
 import com.example.schedule.service.AuthorService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class AuthorController {
     //Lv3 작성자 등록
     @PostMapping
     public ResponseEntity<AuthorResponseDto> createAuthor(
-            @RequestBody AuthorRequestDto authorRequestDto
+            @Valid @RequestBody AuthorRequestDto authorRequestDto
     ){
         return new ResponseEntity<>(authorService.createAuthor(authorRequestDto), HttpStatus.CREATED);
     }
@@ -39,15 +40,15 @@ public class AuthorController {
         return new ResponseEntity<>(authorService.getAuthorById(id), HttpStatus.OK);
     }
 
-    //Lv3 선택 일정 수정
+    //Lv3 선택 작성자 수정
     @PutMapping("/{id}")
     public ResponseEntity<AuthorResponseDto> updateAuthor(
             @PathVariable Long id,
-            @RequestBody AuthorRequestDto authorRequestDto) {
+            @Valid @RequestBody AuthorRequestDto authorRequestDto) {
         return new ResponseEntity<>(authorService.updateAuthor(id, authorRequestDto), HttpStatus.OK);
     }
 
-    //Lv3 선택 일정 삭제
+    //Lv3 선택 작성자 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAuthor(@PathVariable Long id) {
         authorService.deleteAuthor(id);
